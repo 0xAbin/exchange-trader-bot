@@ -1,0 +1,1 @@
+export const MOVEMENT_DEVNET = 30732;

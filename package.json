@@ -1,0 +1,26 @@
+{
+  "name": "exchange-trader-bot",
+  "version": "1.0.0",
+  "description": "Bot-Dex-exchange-trader",
+  "main": "index.js",
+  "scripts": {
+    "clean": "tsc --clean",
+    "watch": "tsc --watch",
+    "build": "tsc",
+    "prod": "tsc && node dist/index.js",
+    "dev": "pnpm exec ts-node ./src/index.ts"
+  },
+  "keywords": [],
+  "author": "0xabin",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@types/node": "^22.4.0",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.2",
+    "viem": "^2.19.6",
+    "wagmi": "^2.12.5"
+  }
+}
