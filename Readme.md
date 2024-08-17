@@ -15,10 +15,10 @@ pnpm run dev
 pnpm install
 ```
 ```bash
-npm run build
+pnpm run build
 ```    
 ```bash
-npm run prod
+pnpm run prod
 ```         
 
 #### ENVIRONMENT VARIABLES
