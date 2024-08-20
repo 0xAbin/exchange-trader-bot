@@ -8,7 +8,8 @@ export  async function getBalance(Walletaddress: string) {
       address: Walletaddress as Address
     });
     const formattedBalance = formatEther(balance);
-    console.log('Wallet Balance:', formattedBalance, 'GAS');
+    // console.log('Wallet Balance :', formattedBalance, 'GAS');
+    return formattedBalance;
   } catch (error) {
     console.error('Error fetching balance:', error);
   }

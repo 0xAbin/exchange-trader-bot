@@ -1,4 +1,4 @@
-import { createPublicClient, defineChain, http } from "viem";
+import { createPublicClient, createWalletClient, defineChain, http } from "viem";
 import { btrTestnet, berachainTestnetbArtio } from "viem/chains";
 
 export const movementDevnet = defineChain({
@@ -31,3 +31,9 @@ export const publicClient = createPublicClient({
   chain: movementDevnet,
   transport: http(),
 });
+
+export const walletClient = createWalletClient({
+  chain: movementDevnet,
+  transport: http(),
+})
+
