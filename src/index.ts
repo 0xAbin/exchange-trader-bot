@@ -2,7 +2,7 @@ import { accountsPrivateKey, FundingWallet, Mnemonicaccount, storeAccounts } fro
 import { asciiConsole } from "./util/asciiConsole";
 import { getBalance } from "./helpers/getBalance";
 import { sendGasToAccounts } from "./helpers/getGas";
-
+import { claimFaucet } from "./helpers/claimFaucet";
 
 // Start the bot ------->
 
@@ -27,12 +27,18 @@ const BotStart = async (): Promise<void> => {
     console.log("Processing Funding Wallet...\n");
     await logWalletDetails("Funding Wallet", FundingWallet.address);
 
-    console.log("Processing Mnemonic Wallet...\n");
-    await logWalletDetails("Mnemonic Wallet", Mnemonicaccount.address);
+    // Uncomment if needed
+    // console.log("Processing Mnemonic Wallet...\n");
+    // await logWalletDetails("Mnemonic Wallet", Mnemonicaccount.address);
 
     console.log(`Sending gas to Mnemonic Wallet and associated accounts...`);
-    await sendGasToAccounts(accountsPrivateKey);
+    // await sendGasToAccounts(accountsPrivateKey);
     console.log("Gas sent successfully.\n");
+
+    // Log message indicating that faucet claiming is about to start
+    console.log("----- Starting Faucet Claim Process for All Wallets -----\n");
+    await claimFaucet(); // Call the faucet claim function
+
   } catch (error) {
     console.error("Error in BotStart function:", error);
   } finally {
@@ -40,4 +46,5 @@ const BotStart = async (): Promise<void> => {
   }
 };
 
+// Start the bot
 BotStart();

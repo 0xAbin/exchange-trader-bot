@@ -1,5 +1,7 @@
-import { createPublicClient, createWalletClient, defineChain, http } from "viem";
-import { btrTestnet, berachainTestnetbArtio } from "viem/chains";
+import { ethers } from "ethers";
+import { Address, createPublicClient, createWalletClient, defineChain, http } from "viem";
+import * as fs from 'fs';
+
 
 export const movementDevnet = defineChain({
   id: 30732,
@@ -7,7 +9,7 @@ export const movementDevnet = defineChain({
   nativeCurrency: { name: "Move", symbol: "MOVE", decimals: 18 },
   rpcUrls: {
     default: {
-      http: ["https://mevm.devnet.imola.movementlabs.xyz/"],
+      http: ["https://mevm.devnet.imola.movementlabs.xyz"],
       webSocket: [""],
     },
   },
@@ -37,3 +39,6 @@ export const walletClient = createWalletClient({
   transport: http(),
 })
 
+export const ethersprovider =  new ethers.JsonRpcProvider(movementDevnet.rpcUrls.default.http[0]);
+
+export const Etherswallet = new ethers.Wallet(process.env.PRIVATE_KEY || "" , ethersprovider);

@@ -2,6 +2,7 @@ import { Address, createWalletClient, custom } from 'viem';
 import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
 import * as fs from 'fs';
 import 'dotenv/config';
+import { ethers } from 'ethers';
 
 const generateAccounts = (mnemonic: string) => {
     const accounts = [];
@@ -44,4 +45,23 @@ storeAccounts(accountsPrivateKey)
 
 export const Mnemonicaccount = mnemonicToAccount(process.env.MNEMONIC as string);
 
-export const FundingWallet = privateKeyToAccount(`0x${process.env.PRIVATE_KEY}`);
+export const FundingWallet = privateKeyToAccount(process.env.PRIVATE_KEY as Address);
+
+export function loadWalletsFromJson(filePath: string, provider: ethers.JsonRpcProvider): ethers.Wallet[] {
+    try {
+        const data = fs.readFileSync(filePath, 'utf-8');
+        const privateKeys = JSON.parse(data);
+        const wallets: ethers.Wallet[] = [];
+
+        for (const [address, privateKey] of Object.entries(privateKeys)) {
+            const wallet = new ethers.Wallet(privateKey as string, provider);
+            wallets.push(wallet);
+            console.log(`Wallet created for address: ${address}`);
+        }
+
+        return wallets;
+    } catch (error) {
+        console.error("Error reading privateKey.json or creating wallets:", error);
+        return [];
+    }
+}

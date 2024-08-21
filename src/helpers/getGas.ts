@@ -3,6 +3,8 @@ import { Address, http } from "viem";
 import { movementDevnet, walletClient } from "../util/config";
 import { parseEther } from "viem";
 import { FundingWallet } from "./account";
+import { getBalance } from './getBalance';
+
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -21,7 +23,7 @@ const animateSpinner = (frame: number) => {
 
 export async function sendGasToAddress(address: string, attempt: number, maxAttempts: number): Promise<any> {
     const account = await FundingWallet;
-    const initialGasPrice = parseEther('0.00001');
+    const initialGasPrice = parseEther('0.001');
 
     console.log(`\nWallet Address: ${address}`);
     
@@ -44,6 +46,8 @@ export async function sendGasToAddress(address: string, attempt: number, maxAtte
             clearInterval(spinnerInterval);
         }
         process.stdout.write(`\r✅ Gas sent successfully! Transaction hash: ${tx}\n`);
+        const balance = await getBalance(address);
+        process.stdout.write(`\r💰 Balance after gas sent: ${balance}\n`);
         return tx;
     } catch (error: any) {
         if (spinnerInterval) {
