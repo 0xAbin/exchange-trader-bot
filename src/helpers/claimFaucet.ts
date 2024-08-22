@@ -8,6 +8,7 @@ import { publicClient, ethersprovider } from "../util/config";
 import { tokenabi } from "../util/abi/tokenabi";
 import { loadWalletsFromJson } from "./account";
 import { saveJsonToFile } from "../util/saveTologs";
+import { estimateGasWithBuffer, getGasLimit } from "../util/getGas";
 
 const calculateClaimAmount = (claimable: number, decimals: number) => {
     return parseUnits(claimable.toString(), decimals);
@@ -29,7 +30,7 @@ const printProgressBar = (current: number, total: number, barLength: number = 30
     console.log(`\r[${filledBar}${emptyBar}] ${percentage}% | ${current}/${total}`);
 };
 
-const colorize = {
+export const colorize = {
     cyan: (text: string) => `\x1b[36m${text}\x1b[0m`,
     yellow: (text: string) => `\x1b[33m${text}\x1b[0m`,
     green: (text: string) => `\x1b[32m${text}\x1b[0m`,
@@ -92,6 +93,7 @@ export const claimFaucet = async (): Promise<void> => {
 
         // Check gas balance
         const gasBalance = await publicClient.getBalance({ address: wallet.address as Address });
+
         const gasBalanceEth = parseFloat(formatUnits(gasBalance, 18));
         console.log(colorize.yellow(`💰 Current Gas Balance: ${gasBalanceEth.toFixed(4)} ETH`));
 
@@ -111,26 +113,40 @@ export const claimFaucet = async (): Promise<void> => {
             console.log(colorize.blue("📜 Preparing Transaction..."));
 
             spinner.start('Claiming tokens...');
+            const newgasprice = await estimateGasWithBuffer(wallets[0].address, 1); // Assuming first attempt
 
-            const tx = await faucetContract.claimTokens(ClaimToken.address, tokenAmount);
+            const gasLimit = await getGasLimit(wallet.address, faucetContractAddress as Address, tokenAmount);
+
+            const tx = await faucetContract.claimTokens(ClaimToken.address, tokenAmount, {
+                gasPrice: newgasprice,
+                gasLimit
+            });
             spinner.stop();
             spinner.start('Transaction sent. Awaiting confirmation...');
 
-            const receipt = await tx.wait();
-            spinner.stop();
+            try {
+                const receipt = await tx.wait();
+                spinner.stop();
 
-            if (receipt.status === 1) {
-                console.log(colorize.green("\n✅ Transaction confirmed!"));
-                claimedAddresses.push(wallet.address);
-            } else {
-                console.log(colorize.red("\n❌ Transaction failed: Receipt status indicates failure."));
-                unclaimedAddresses.push({
-                    address: wallet.address,
-                    error: "Receipt status indicates failure.",
-                });
+                if (receipt.status === 1) {
+                    console.log(colorize.green("\n✅ Transaction confirmed!"));
+                    claimedAddresses.push(wallet.address);
+                } else {
+                    console.log(colorize.red("\n❌ Transaction failed: Receipt status indicates failure."));
+                    unclaimedAddresses.push({
+                        address: wallet.address,
+                        error: "Receipt status indicates failure.",
+                    });
+                }
+
+                console.log(colorize.green(`Faucet Claim Completed For: ${wallet.address}`));
+
+            } catch (waitError : any) {
+                spinner.stop();
+                console.error(colorize.red(`\n❌ Error while waiting for transaction confirmation: ${waitError.message}`));
+                console.log(colorize.yellow("⏳ Showing error message for 10 seconds..."));
+                await delay(10000);
             }
-
-            console.log(colorize.green(`Faucet Claim Completed For: ${wallet.address}`));
 
         } catch (e) {
             spinner.stop();
@@ -152,6 +168,9 @@ export const claimFaucet = async (): Promise<void> => {
                 address: wallet.address,
                 error: errorMessage,
             });
+
+            console.log(colorize.yellow("⏳ Showing error message for 10 seconds..."));
+            await delay(10000);
         }
 
         const getBalanceClaimed = await publicClient.readContract({

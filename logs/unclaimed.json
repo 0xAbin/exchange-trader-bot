@@ -1,6 +1,6 @@
 [
   {
     "address": "0x43dccD1A288ed04Bea4cda6dda3f72d527926346",
-    "error": "Cooldown period has not passed"
+    "error": "The request took too long to respond.\n\nURL: https://mevm.devnet.imola.movementlabs.xyz\nRequest body: {\"method\":\"eth_getBlockByNumber\",\"params\":[\"latest\",false]}\n\nDetails: The request timed out.\nVersion: 2.19.6"
   }
 ]

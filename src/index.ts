@@ -3,6 +3,7 @@ import { asciiConsole } from "./util/asciiConsole";
 import { getBalance } from "./helpers/getBalance";
 import { claimFaucet } from "./helpers/claimFaucet";
 import { sendGasToAccounts } from "./helpers/getGas";
+import { getAllowance } from "./helpers/getAllowance";
 
 // Start the bot ------->
 
@@ -44,7 +45,11 @@ const BotStart = async (): Promise<void> => {
 
     // Start the faucet claim process
     console.log("----- Starting Faucet Claim Process for All Wallets -----\n");
-    await claimFaucet(); // Call the faucet claim function
+    await claimFaucet(); 
+
+
+    console.log("----- Starting Allowance Check Process for All Wallets -----\n");
+    await getAllowance();
 
   } catch (error) {
     console.error("Error in BotStart function:", error);
