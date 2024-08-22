@@ -2,21 +2,5 @@
   {
     "address": "0x43dccD1A288ed04Bea4cda6dda3f72d527926346",
     "error": "Cooldown period has not passed"
-  },
-  {
-    "address": "0xCC8989aD6e1aEeBA124DdAbF29A46dB319d074f9",
-    "error": "Insufficient balance"
-  },
-  {
-    "address": "0xdEA8b4C90979dD109fF6E24EE84efbB7D495f3a2",
-    "error": "Insufficient balance"
-  },
-  {
-    "address": "0xC933675efAD751a9178c9c8f475225Df10a2503c",
-    "error": "Insufficient balance"
-  },
-  {
-    "address": "0xC9b52999Cc9C536f8062c2fAce060a6d22063E91",
-    "error": "Insufficient balance"
   }
 ]

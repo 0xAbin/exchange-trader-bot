@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 
 const generateAccounts = (mnemonic: string) => {
     const accounts = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 1; i++) {
         const account = mnemonicToAccount(mnemonic, {
             accountIndex: 0,
             addressIndex: i,
