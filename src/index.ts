@@ -4,6 +4,7 @@ import { getBalance } from "./helpers/getBalance";
 import { claimFaucet } from "./helpers/claimFaucet";
 import { sendGasToAccounts } from "./helpers/getGas";
 import { getAllowance } from "./helpers/getAllowance";
+import { tradeOpen } from "./helpers/tradeOpen";
 
 // Start the bot ------->
 
@@ -38,18 +39,21 @@ const BotStart = async (): Promise<void> => {
     // console.log("Processing Mnemonic Wallet...\n");
     // await logWalletDetails("Mnemonic Wallet", Mnemonicaccount.address);
 
-    // Uncomment to send gas to associated accounts
-    console.log(`Sending gas to Mnemonic Wallet and associated accounts...`);
-    await sendGasToAccounts(accountsPrivateKey);
-    console.log("Gas sent successfully.\n");
 
-    // Start the faucet claim process
-    console.log("----- Starting Faucet Claim Process for All Wallets -----\n");
-    await claimFaucet(); 
+    // console.log(`Sending gas to Mnemonic Wallet and associated accounts...`);
+    // await sendGasToAccounts(accountsPrivateKey);
+    // console.log("Gas sent successfully.\n");
+
+  
+    // console.log("----- Starting Faucet Claim Process for All Wallets -----\n");
+    // await claimFaucet(); 
 
 
-    console.log("----- Starting Allowance Check Process for All Wallets -----\n");
-    await getAllowance();
+    // console.log("----- Starting Allowance Check Process for All Wallets -----\n");
+    // await getAllowance();
+
+    console.log("----- Starting Trade Open Process for All Wallets -----\n");
+    await tradeOpen();
 
   } catch (error) {
     console.error("Error in BotStart function:", error);

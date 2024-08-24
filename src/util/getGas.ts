@@ -33,8 +33,8 @@ export const estimateGasWithBuffer = async (address: string, attempt: number): P
 
     lastUsedGasPrice = newGasPrice;
 
-    console.log(`Current Base Fee: ${formatEther(currentBaseFee)} GAS`);
-    console.log(`Estimated Gas Price: ${formatEther(newGasPrice)} GAS`);
+    // console.log(`Current Base Fee: ${formatEther(currentBaseFee)} GAS`);
+    // console.log(`Estimated Gas Price: ${formatEther(newGasPrice)} GAS`);
 
     return newGasPrice;
 };

@@ -10,7 +10,7 @@ import { loadWalletsFromJson } from "./account";
 import { saveJsonToFile } from "../util/saveTologs";
 import { estimateGasWithBuffer, getGasLimit } from "../util/getGas";
 
-const calculateClaimAmount = (claimable: number, decimals: number) => {
+export const calculateClaimAmount = (claimable: number, decimals: number) => {
     return parseUnits(claimable.toString(), decimals);
 };
 
@@ -117,10 +117,9 @@ export const claimFaucet = async (): Promise<void> => {
 
             const gasLimit = await getGasLimit(wallet.address, faucetContractAddress as Address, tokenAmount);
 
-            const tx = await faucetContract.claimTokens(ClaimToken.address, tokenAmount, {
-                gasPrice: newgasprice,
-                gasLimit
-            });
+            // console.log("Gas Limit: " + gasLimit);
+
+            const tx = await faucetContract.claimTokens(ClaimToken.address, tokenAmount, { newgasprice});
             spinner.stop();
             spinner.start('Transaction sent. Awaiting confirmation...');
 

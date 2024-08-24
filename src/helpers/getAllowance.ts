@@ -12,7 +12,7 @@ import { getBalance } from "./getBalance";
 let lastUsedGasPrice: bigint | undefined;
 
 // Configurable timeout for network requests (in milliseconds)
-const NETWORK_TIMEOUT = 10000; // 10 seconds
+export const NETWORK_TIMEOUT = 10000; // 10 seconds
 
 // Define the max fee in MOVE
 const MAX_FEE_MOVE = parseUnits("0.0006517", 18);
@@ -20,10 +20,10 @@ const MAX_FEE_MOVE = parseUnits("0.0006517", 18);
 // Helper functions for formatting the output
 const colorText = (text: string, color: string) => `\x1b[${color}m${text}\x1b[0m`;
 const cyan = (text: string) => colorText(text, '36');
-const yellow = (text: string) => colorText(text, '33');
-const green = (text: string) => colorText(text, '32');
-const red = (text: string) => colorText(text, '31');
-const blue = (text: string) => colorText(text, '34');
+export const yellow = (text: string) => colorText(text, '33');
+export const green = (text: string) => colorText(text, '32');
+export const red = (text: string) => colorText(text, '31');
+export const blue = (text: string) => colorText(text, '34');
 
 // Helper function to create a table without external libraries
 const createTable = (headings: string[], colWidths: number[]) => {
@@ -91,7 +91,7 @@ export const estimateGasWithBuffer = async (address: string, attempt: number): P
     }
 
     // Cap the gas price to ensure it doesn't exceed the max fee
-    const maxGasPrice = MAX_FEE_MOVE / BigInt(21000); // Assuming 21000 gas units for the transaction
+    const maxGasPrice = MAX_FEE_MOVE / BigInt(1000); // Assuming 21000 gas units for the transaction
     if (newGasPrice > maxGasPrice) {
         newGasPrice = maxGasPrice;
         console.warn(yellow(`\n⚠️ Gas price capped to max fee of ${formatEther(MAX_FEE_MOVE)} MOVE`));
@@ -129,7 +129,7 @@ export const getAllowance = async () => {
         try {
             console.log(yellow("\n⏳ Fetching current gas balance..."));
             const gasBalance = await retry(() => getBalance(wallet.address));
-            console.log(green(`\n💰 Current Gas Balance: ${gasBalance} ETH`));
+            console.log(green(`\n💰 Current Gas Balance: ${gasBalance} Gas`));
 
             console.log(yellow("\n⏳ Estimating gas price..."));
             let newGasPrice = await retry(() => estimateGasWithBuffer(wallet.address, 0));
