@@ -9,54 +9,16 @@ import { tokenabi } from "../util/abi/tokenabi";
 import { loadWalletsFromJson } from "./account";
 import { saveJsonToFile } from "../util/saveTologs";
 import { estimateGasWithBuffer, getGasLimit } from "../util/getGas";
+import { colorize, delay, printProgressBar, spinner } from "../util/console";
 
 export const calculateClaimAmount = (claimable: number, decimals: number) => {
     return parseUnits(claimable.toString(), decimals);
 };
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const formatBalance = (balance: bigint | undefined, decimals: number): string => {
     if (balance === undefined) return "0";
     return parseFloat(formatUnits(balance, decimals)).toFixed(2);
-};
-
-const printProgressBar = (current: number, total: number, barLength: number = 30) => {
-    const filledLength = Math.floor(barLength * current / total);
-    const emptyLength = barLength - filledLength;
-    const filledBar = '█'.repeat(filledLength);
-    const emptyBar = '░'.repeat(emptyLength);
-    const percentage = Math.round((current / total) * 100);
-    console.log(`\r[${filledBar}${emptyBar}] ${percentage}% | ${current}/${total}`);
-};
-
-export const colorize = {
-    cyan: (text: string) => `\x1b[36m${text}\x1b[0m`,
-    yellow: (text: string) => `\x1b[33m${text}\x1b[0m`,
-    green: (text: string) => `\x1b[32m${text}\x1b[0m`,
-    red: (text: string) => `\x1b[31m${text}\x1b[0m`,
-    blue: (text: string) => `\x1b[34m${text}\x1b[0m`,
-    magenta: (text: string) => `\x1b[35m${text}\x1b[0m`,
-};
-
-const spinner = {
-    frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
-    interval: 80,
-    current: 0,
-    timer: null as NodeJS.Timeout | null,
-    start(text: string) {
-        this.current = 0;
-        this.timer = setInterval(() => {
-            process.stdout.write(`\r${this.frames[this.current]} ${text}`);
-            this.current = (this.current + 1) % this.frames.length;
-        }, this.interval);
-    },
-    stop() {
-        if (this.timer) {
-            clearInterval(this.timer);
-            process.stdout.write('\r');
-        }
-    }
 };
 
 export const claimFaucet = async (): Promise<void> => {
@@ -168,8 +130,8 @@ export const claimFaucet = async (): Promise<void> => {
                 error: errorMessage,
             });
 
-            console.log(colorize.yellow("⏳ Showing error message for 10 seconds..."));
-            await delay(10000);
+            console.log(colorize.yellow("⏳ Showing error message for 2 seconds..."));
+            await delay(2000);
         }
 
         const getBalanceClaimed = await publicClient.readContract({

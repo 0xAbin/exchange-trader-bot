@@ -105,13 +105,23 @@ export const estimateGasWithBuffer = async (address: string, attempt: number): P
     return newGasPrice;
 };
 
-// Main function to process wallets
+const checkAllowance = async (tokenContract: ethers.Contract, owner: string, spender: string): Promise<bigint> => {
+    try {
+        const allowance = await tokenContract.allowance(owner, spender);
+        return allowance;
+    } catch (error: any) {
+        console.error(red(`Error checking allowance: ${error.message}`));
+        throw error;
+    }
+};
+
+
 export const getAllowance = async () => {
     const tokens = FacuetTestToken[MOVEMENT_DEVNET];
     const allowanceToken = tokens.find(token => token.symbol === "USDC");
 
     if (!allowanceToken) {
-        console.log(red("\n❌ WSTETH token not found in the FaucetTestToken list."));
+        console.log(red("\n❌ USDC token not found in the FaucetTestToken list."));
         return;
     }
 
@@ -124,38 +134,55 @@ export const getAllowance = async () => {
     console.log(blue('\nStarting to process wallets...\n'));
 
     for (const [index, wallet] of wallets.entries()) {
-        console.log(blue(`\nProcessing Wallet: ${wallet.address} (${index + 1}/${wallets.length})`));
+        console.log(blue(`\n📊 Processing Wallet: ${wallet.address} (${index + 1}/${wallets.length})`));
 
         try {
-            console.log(yellow("\n⏳ Fetching current gas balance..."));
+            console.log(yellow("  ⏳ Fetching current gas balance..."));
             const gasBalance = await retry(() => getBalance(wallet.address));
-            console.log(green(`\n💰 Current Gas Balance: ${gasBalance} Gas`));
 
-            console.log(yellow("\n⏳ Estimating gas price..."));
+            if (gasBalance === undefined) {
+                console.error(red(`  ❌ Failed to fetch gas balance for wallet: ${wallet.address}`));
+                table.addRow([wallet.address, red('Error'), red('Error')]);
+                continue;
+            }
+
+            console.log(green(`  💰 Current Gas Balance: ${gasBalance} Gas`));
+
+            console.log(yellow("  ⏳ Estimating gas price..."));
             let newGasPrice = await retry(() => estimateGasWithBuffer(wallet.address, 0));
 
             const syntheticsRouterAddress = getContracts[MOVEMENT_DEVNET].SyntheticsRouter;
             const tokenContract = new ethers.Contract(allowanceToken.address, tokenabi, wallet);
 
-            console.log(yellow("\n⏳ Approving allowance..."));
+            console.log(yellow("  ⏳ Checking current allowance..."));
+            const currentAllowance = await checkAllowance(tokenContract, wallet.address, syntheticsRouterAddress);
+            console.log(green(`  🔓 Current Allowance: ${formatUnits(currentAllowance, allowanceToken.decimals)} USDC`));
+
+            if (currentAllowance >= 1000000n) {
+                console.log(green("  ✅ Maximum allowance already granted. Skipping approval."));
+                table.addRow([wallet.address, gasBalance.toString(), "Max"]);
+                continue;
+            }
+
+            console.log(yellow("  ⏳ Approving allowance..."));
 
             let attempt = 0;
-            const stopLoading = loadingBar("\n⏳ Approving allowance", 90000); // 90 seconds loading bar
-
             while (true) {
                 try {
                     const tx = await tokenContract.approve(syntheticsRouterAddress, ethers.MaxUint256, { gasPrice: newGasPrice });
+                    console.log(cyan(`  📝 Approval transaction sent. Waiting for confirmation...`));
                     await tx.wait();
-                    stopLoading();
-                    console.log(green(`\n✔️ Approval transaction successful for wallet: ${wallet.address}`));
+                    console.log(green(`  ✔️ Approval transaction successful for wallet: ${wallet.address}`));
+                    
+                    // const newAllowance = await checkAllowance(tokenContract, wallet.address, syntheticsRouterAddress);
+                    table.addRow([wallet.address, gasBalance.toString(), "Max"]);
                     break;
                 } catch (error: any) {
                     if (error.code === 'REPLACEMENT_UNDERPRICED') {
-                        console.warn(red(`\nRetrying due to error: Replacement transaction underpriced. Adjusting gas price and retrying...`));
+                        console.warn(red(`  ⚠️ Replacement transaction underpriced. Adjusting gas price and retrying...`));
                         attempt++;
                         newGasPrice = await estimateGasWithBuffer(wallet.address, attempt);
                     } else {
-                        stopLoading();
                         throw error;
                     }
                 }

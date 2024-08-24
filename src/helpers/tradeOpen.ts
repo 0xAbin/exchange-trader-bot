@@ -4,8 +4,12 @@ import { MOVEMENT_DEVNET } from "../util/chains";
 import { ethersprovider } from "../util/config";
 import { loadWalletsFromJson } from "./account";
 import {
+  blue,
   estimateGasWithBuffer,
+  green,
   NETWORK_TIMEOUT,
+  red,
+  yellow,
 } from "./getAllowance";
 import { singleMarketAbi } from "../util/abi/singleMarketAbi";
 import { getBalance } from "./getBalance";
@@ -18,43 +22,37 @@ import {
   uiFees,
 } from "../lib/Faucetokens/token";
 import axios from "axios";
+import { Address } from "viem";
+import { customSpinner, cyan, magenta, sleep } from "../util/console";
 
 // Custom animation frames
 const frames = ['|', '/', '-', '\\'];
 
-// Custom color functions
-const red = (text: string) => `\x1b[31m${text}\x1b[0m`;
-const green = (text: string) => `\x1b[32m${text}\x1b[0m`;
-const yellow = (text: string) => `\x1b[33m${text}\x1b[0m`;
-const blue = (text: string) => `\x1b[34m${text}\x1b[0m`;
-const magenta = (text: string) => `\x1b[35m${text}\x1b[0m`;
-const cyan = (text: string) => `\x1b[36m${text}\x1b[0m`;
 
-// Custom spinner function
-function customSpinner(text: string) {
-  let i = 0;
-  return setInterval(() => {
-    process.stdout.write(`\r${frames[i]} ${text}`);
-    i = (i + 1) % frames.length;
-  }, 100);
-}
-
-// Sleep function
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Fetch token prices function
 export const fetchTokenPrices = async () => {
-  const response = await axios.get("https://api.devnet.avituslabs.xyz/prices/tickers");
-  return response.data;
+  try {
+    const response = await axios.get("https://api.devnet.avituslabs.xyz/prices/tickers");
+    return response.data;
+  } catch (error: any) {
+    console.error(red(`Error fetching token prices: ${error.message}`));
+    throw error;
+  }
 };
 
 // Get price for token address function
 export const getPriceForTokenAddress = async (address: string) => {
-  const tokenPrices = await fetchTokenPrices();
-  const tokenPrice = tokenPrices.find(
-    (price: any) => price.tokenAddress.toLowerCase() === address.toLowerCase()
-  );
-  return tokenPrice?.maxPrice;
+  try {
+    const tokenPrices = await fetchTokenPrices();
+    const tokenPrice = tokenPrices.find(
+      (price: any) => price.tokenAddress.toLowerCase() === address.toLowerCase()
+    );
+    return tokenPrice?.maxPrice;
+  } catch (error: any) {
+    console.error(red(`Error getting price for token address: ${error.message}`));
+    throw error;
+  }
 };
 
 // Retry function
@@ -133,7 +131,12 @@ export const tradeOpen = async () => {
       console.log(green(`\n✔ Gas Balance: ${yellow(gasBalance)} Gas`));
       await sleep(500);
 
+      const reciver = wallet.address;
+      // console.log(reciver);
+
       const singleMarketOrderHandler = getContracts[MOVEMENT_DEVNET].SingleMarketExchangeRouter;
+      // console.log(singleMarketOrderHandler);
+
       const tokenContract = new ethers.Contract(singleMarketOrderHandler, singleMarketAbi, wallet);
 
       spinner = customSpinner('Preparing trade parameters...');
@@ -145,9 +148,19 @@ export const tradeOpen = async () => {
       const collvstradeamount = tradeAmount * collateral;
       const expndedDecimals = expandDecimals(collvstradeamount, 30);
 
+      // const tradeamount = BigInt(tradeAmount)
+
+      const sendWnt = { method : "sendWnt", params : [orderVault, 0n] };
+
+      const sendWntMaul = [orderVault, 0n]
+
+      const sendTokens = { method : "sendTokens", params : [ Trade?.address, orderVault, newCollateral] };
+
+      const sendTokensMaul = [Trade?.address, orderVault, newCollateral];
+   
       const orderParams = {
         addresses: {
-          receiver: wallet.address,
+          receiver: reciver as Address,
           callbackContract: ethers.ZeroAddress,
           uiFeeReceiver: uiFees,
           market: TRadeMarket,
@@ -175,6 +188,16 @@ export const tradeOpen = async () => {
         primaryPrices: primaryPrices
       };
 
+      const simulateCreateSingleMarketOrder = { method : "simulateCreateSingleMarketOrder", params : [orderParams, pricesParams] };
+
+      const simulateCreateSingleMarketmaul = [orderParams, pricesParams];
+
+      const multicall = [sendWnt, sendTokens, simulateCreateSingleMarketOrder];
+
+      const encodedPayload = multicall.filter(Boolean).map((call) => tokenContract.interface.encodeFunctionData(call!.method, call!.params));
+
+      // console.log(encodedPayload);
+
       clearInterval(spinner);
       console.log(green('\n✔ Trade parameters prepared'));
 
@@ -184,7 +207,6 @@ export const tradeOpen = async () => {
 
       clearInterval(spinner);
      
-
       spinner = customSpinner('Checking Parms');
       let newGasPrice = await retry(() => estimateGasWithBuffer(wallet.address, 0));
       clearInterval(spinner);
@@ -192,21 +214,69 @@ export const tradeOpen = async () => {
      
       await sleep(500);
 
-      spinner = customSpinner('Simulating market order...');
+      spinner = customSpinner('Sending multicall request...');
 
       try {
-        const tx = await tokenContract.simulateCreateSingleMarketOrder(orderParams, pricesParams );
+        const tx = await tokenContract.multicall(encodedPayload);
         const receipt = await tx.wait();
         clearInterval(spinner);
-        console.log("Transaction hash:", tx.hash);
-        console.log("Transaction successful with receipt:", receipt);
-        console.log(green(`\n✔ Market order simulated successfully for wallet: ${wallet.address}`));
+        console.log(green("\n✔ Transaction sent successfully"));
+        console.log(yellow(`Transaction hash: ${tx.hash}`));
+        console.log(green("✔ Transaction confirmed"));
+        console.log(yellow(`Gas used: ${receipt.gasUsed.toString()}`));
+        console.log(green(`✔ Market order simulated successfully for wallet: ${wallet.address}`));
       } catch (error: any) {
         clearInterval(spinner);
         if (error.code === "REPLACEMENT_UNDERPRICED") {
-          console.warn(red(`\n⚠ Retrying due to error: Replacement transaction underpriced. Adjusting gas price and retrying...`));
+          console.warn(yellow(`\n⚠ Retrying due to error: Replacement transaction underpriced. Adjusting gas price and retrying...`));
           newGasPrice = await estimateGasWithBuffer(wallet.address, 1);
+          spinner = customSpinner('Retrying with new gas price...');
+          try {
+            const tx = await tokenContract.multicall(encodedPayload, { gasPrice: newGasPrice });
+            const receipt = await tx.wait();
+            clearInterval(spinner);
+            console.log(green("\n✔ Transaction sent successfully after retry"));
+            console.log(yellow(`Transaction hash: ${tx.hash}`));
+            console.log(green("✔ Transaction confirmed"));
+            console.log(yellow(`Gas used: ${receipt.gasUsed.toString()}`));
+            console.log(green(`✔ Market order simulated successfully for wallet: ${wallet.address}`));
+          } catch (retryError: any) {
+            clearInterval(spinner);
+            console.error(red(`\n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓`));
+            console.error(red(`┃         TRANSACTION ERROR          ┃`));
+            console.error(red(`┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛`));
+            
+            const errorMessage = retryError.message.includes("insufficient balance")
+              ? "insufficient balance"
+              : retryError.message;
+            
+            console.error(yellow(`Error: ${errorMessage}`));
+            console.error(magenta(`\nPossible cause:`));
+            console.error(cyan(`This error typically occurs when your wallet doesn't have enough funds to cover the transaction cost (gas fee) plus the amount you're trying to send.`));
+            console.error(cyan(`\nTo resolve:`));
+            console.error(cyan(`1. Check your wallet balance`));
+            console.error(cyan(`2. Ensure you have enough ETH for gas fees`));
+            console.error(cyan(`3. If trading, verify you have sufficient tokens`));
+            
+            throw retryError;
+          }
         } else {
+          console.error(red(`\n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓`));
+          console.error(red(`┃         TRANSACTION ERROR          ┃`));
+          console.error(red(`┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛`));
+          
+          const errorMessage = error.message.includes("insufficient balance")
+            ? "insufficient balance"
+            : error.message;
+          
+          console.error(yellow(`Error: ${errorMessage}`));
+          console.error(magenta(`\nPossible cause:`));
+          console.error(cyan(`This error typically occurs when your wallet doesn't have enough funds to cover the transaction cost (gas fee) plus the amount you're trying to send.`));
+          console.error(cyan(`\nTo resolve:`));
+          console.error(cyan(`1. Check your wallet balance`));
+          console.error(cyan(`2. Ensure you have enough ETH for gas fees`));
+          console.error(cyan(`3. If trading, verify you have sufficient tokens`));
+          
           throw error;
         }
       }
@@ -220,6 +290,11 @@ export const tradeOpen = async () => {
 
   } catch (err: any) {
     clearInterval(spinner);
-    console.error(red(`\n❌ Error: ${err.message}`));
+    console.error(red(`\n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓`));
+    console.error(red(`┃           FATAL ERROR             ┃`));
+    console.error(red(`┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛`));
+    console.error(yellow(`Error: ${err.message}`));
+    console.error(magenta('\nStack trace:'));
+    console.error(cyan(err.stack));
   }
 };

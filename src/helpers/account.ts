@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 
 const generateAccounts = (mnemonic: string) => {
     const accounts = [];
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 5; i++) {
         const account = mnemonicToAccount(mnemonic, {
             accountIndex: 0,
             addressIndex: i,
@@ -57,6 +57,35 @@ export function loadWalletsFromJson(filePath: string, provider: ethers.JsonRpcPr
             const wallet = new ethers.Wallet(privateKey as string, provider);
             wallets.push(wallet);
             console.log(`Wallet created for address: ${address}`);
+        }
+
+        return wallets;
+    } catch (error) {
+        console.error("Error reading privateKey.json or creating wallets:", error);
+        return [];
+    }
+}
+
+
+
+
+export function loadWalletsFromJsonViem(filePath: string) {
+    try {
+        const data = fs.readFileSync(filePath, 'utf-8');
+        const privateKeys = JSON.parse(data);
+        const wallets = [];
+
+        for (const [address, privateKey] of Object.entries(privateKeys)) {
+            try {
+                if (typeof privateKey !== 'string') {
+                    throw new Error(`Invalid private key format for address ${address}`);
+                }
+                const wallet = privateKeyToAccount(privateKey as Address); 
+                wallets.push(wallet);
+                console.log(`Wallet created for address: ${wallet.address}`);
+            } catch (err) {
+                console.error(`Failed to create wallet for address ${address}:`, err);
+            }
         }
 
         return wallets;
