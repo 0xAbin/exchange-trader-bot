@@ -15,7 +15,6 @@ export const calculateClaimAmount = (claimable: number, decimals: number) => {
     return parseUnits(claimable.toString(), decimals);
 };
 
-
 const formatBalance = (balance: bigint | undefined, decimals: number): string => {
     if (balance === undefined) return "0";
     return parseFloat(formatUnits(balance, decimals)).toFixed(2);
@@ -55,7 +54,6 @@ export const claimFaucet = async (): Promise<void> => {
 
         // Check gas balance
         const gasBalance = await publicClient.getBalance({ address: wallet.address as Address });
-
         const gasBalanceEth = parseFloat(formatUnits(gasBalance, 18));
         console.log(colorize.yellow(`💰 Current Gas Balance: ${gasBalanceEth.toFixed(4)} ETH`));
 
@@ -72,66 +70,103 @@ export const claimFaucet = async (): Promise<void> => {
             const faucetContractAddress = getContracts[MOVEMENT_DEVNET].FaucetVault;
             const faucetContract = new ethers.Contract(faucetContractAddress, facuetAbi, wallet);
 
-            console.log(colorize.blue("📜 Preparing Transaction..."));
-
-            spinner.start('Claiming tokens...');
-            const newgasprice = await estimateGasWithBuffer(wallets[0].address, 1); // Assuming first attempt
-
-            const gasLimit = await getGasLimit(wallet.address, faucetContractAddress as Address, tokenAmount);
-
-            // console.log("Gas Limit: " + gasLimit);
-
-            const tx = await faucetContract.claimTokens(ClaimToken.address, tokenAmount, { newgasprice});
-            spinner.stop();
-            spinner.start('Transaction sent. Awaiting confirmation...');
-
-            try {
-                const receipt = await tx.wait();
-                spinner.stop();
-
-                if (receipt.status === 1) {
-                    console.log(colorize.green("\n✅ Transaction confirmed!"));
-                    claimedAddresses.push(wallet.address);
-                } else {
-                    console.log(colorize.red("\n❌ Transaction failed: Receipt status indicates failure."));
-                    unclaimedAddresses.push({
-                        address: wallet.address,
-                        error: "Receipt status indicates failure.",
-                    });
-                }
-
-                console.log(colorize.green(`Faucet Claim Completed For: ${wallet.address}`));
-
-            } catch (waitError : any) {
-                spinner.stop();
-                console.error(colorize.red(`\n❌ Error while waiting for transaction confirmation: ${waitError.message}`));
-                console.log(colorize.yellow("⏳ Showing error message for 10 seconds..."));
-                await delay(10000);
-            }
-
-        } catch (e) {
-            spinner.stop();
-            const error = e as Error;
-            let errorMessage = "Unknown error";
-
-            if (error.message.includes("replacement fee too low")) {
-                errorMessage = "Replacement fee too low";
-            } else if (error.message.includes("insufficient balance")) {
-                errorMessage = "Insufficient balance";
-            } else {
-                const revertedMatch = error.message.match(/execution reverted: "(.*?)"/);
-                errorMessage = revertedMatch ? revertedMatch[1] : error.message;
-            }
-
-            console.log(colorize.red(`❌ Transaction failed:`));
-            console.error(colorize.red(`   - Message: ${errorMessage}`));
-            unclaimedAddresses.push({
-                address: wallet.address,
-                error: errorMessage,
+            // Check if the wallet has already claimed tokens
+            const currentBalance = await publicClient.readContract({
+                address: ClaimToken.address as Address,
+                abi: tokenabi,
+                functionName: "balanceOf",
+                args: [wallet.address],
             });
 
-            console.log(colorize.yellow("⏳ Showing error message for 2 seconds..."));
-            await delay(2000);
+            if (typeof currentBalance === 'bigint') {
+                const currentBalanceValue = currentBalance as bigint;
+                const currentBalanceInTokens = parseFloat(formatUnits(currentBalanceValue, ClaimToken.decimals));
+                const claimAmountInTokens = parseFloat(formatUnits(tokenAmount, ClaimToken.decimals));
+
+                if (currentBalanceInTokens >= claimAmountInTokens) {
+                    console.log(colorize.yellow("💰 Wallet already has sufficient token balance. Skipping this wallet."));
+                    unclaimedAddresses.push({
+                        address: wallet.address,
+                        error: "Already has sufficient token balance",
+                    });
+                    continue;
+                }
+            } else {
+                console.error("❌ Error: currentBalance is not of type bigint");
+                unclaimedAddresses.push({
+                    address: wallet.address,
+                    error: "currentBalance is not a bigint",
+                });
+                continue;
+            }
+
+            let success = false;
+            let retries = 0;
+            let delayTime = 60000; // Start with 1 minute delay
+
+            while (!success) {
+                try {
+                    console.log(colorize.blue("📜 Preparing Transaction..."));
+                    spinner.start('Claiming tokens...');
+                    
+                    const newgasprice = await estimateGasWithBuffer(wallet.address, 1);
+
+                    const tx = await faucetContract.claimTokens(ClaimToken.address, tokenAmount, { gasPrice: newgasprice });
+                    spinner.stop();
+                    spinner.start('Transaction sent. Awaiting confirmation...');
+
+                    const receipt = await tx.wait();
+                    spinner.stop();
+
+                    if (receipt.status === 1) {
+                        console.log(colorize.green("\n✅ Transaction confirmed!"));
+                        claimedAddresses.push(wallet.address);
+                        success = true;
+                    } else {
+                        throw new Error("Receipt status indicates failure.");
+                    }
+
+                    console.log(colorize.green(`Faucet Claim Completed For: ${wallet.address}`));
+
+                } catch (e) {
+                    spinner.stop();
+                    const error = e as Error;
+
+                    if (error.message.includes("Cooldown period has not passed")) {
+                        console.log(colorize.yellow("⏩ Cooldown period has not passed. Skipping to next wallet."));
+                        success = true; // Exit retry loop if cooldown is the issue
+                        break;
+                    } else if (error.message.includes("server response 524")) {
+                        console.log(colorize.red(`❌ Server error 524: ${error.message}`));
+                        console.log(colorize.yellow(`🔄 Retrying in ${delayTime / 1000} seconds...`));
+                        await delay(delayTime);
+                        delayTime += 60000; // Increase delay by 1 minute each retry
+                    } else {
+                        console.log(colorize.red(`❌ Transaction failed: ${error.message}`));
+                        if (retries < 2) {
+                            retries++;
+                            console.log(colorize.yellow(`🔄 Retrying in ${delayTime / 1000} seconds... (Attempt ${retries + 1}/3)`));
+                            await delay(delayTime);
+                            delayTime += 60000; // Increase delay by 1 minute each retry
+                        } else {
+                            unclaimedAddresses.push({
+                                address: wallet.address,
+                                error: error.message,
+                            });
+                            console.log(colorize.red("❌ Maximum retries reached. Moving to the next wallet."));
+                            success = true; // Exit retry loop after max retries
+                            break;
+                        }
+                    }
+                }
+            }
+
+        } catch (error: any) {
+            console.error(colorize.red(`\n❌ Unexpected error: ${error.message}`));
+            unclaimedAddresses.push({
+                address: wallet.address,
+                error: "Unexpected error",
+            });
         }
 
         const getBalanceClaimed = await publicClient.readContract({

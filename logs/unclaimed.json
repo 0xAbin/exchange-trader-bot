@@ -1,22 +1,78 @@
 [
   {
     "address": "0x43dccD1A288ed04Bea4cda6dda3f72d527926346",
-    "error": "Cooldown period has not passed"
-  },
-  {
-    "address": "0xCC8989aD6e1aEeBA124DdAbF29A46dB319d074f9",
-    "error": "Cooldown period has not passed"
+    "error": "Already has sufficient token balance"
   },
   {
     "address": "0xdEA8b4C90979dD109fF6E24EE84efbB7D495f3a2",
-    "error": "Cooldown period has not passed"
+    "error": "Already has sufficient token balance"
   },
   {
     "address": "0xC933675efAD751a9178c9c8f475225Df10a2503c",
-    "error": "Cooldown period has not passed"
+    "error": "Already has sufficient token balance"
   },
   {
     "address": "0xC9b52999Cc9C536f8062c2fAce060a6d22063E91",
-    "error": "Cooldown period has not passed"
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x2FFD94a1A303E87B1F50f23Cc0dC4DE86afC3044",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x58d934098Bc255f22a8874D2a457bE39d5Ba2C50",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x65aF27e08104c435Fcdd01492F06dCd7AbD37c3B",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x250755873a4af9A82A030207d01564C50Bba0FC6",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x2d975B1E38636504612Caae0bF1E1e82b1DD8525",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x9E535564993dd024317271f28F985D2694908f02",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x3b43e299a6740F8800403961969eaD48B3d03133",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0xDAF1cB9Efb096c95ae70AfB0C03DCD2a5350BdbC",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x87459b57c5AE643cCdd478fBDfd2BCf591FCaB9a",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x873e141ABd57B05137D84ce473a5d400283E940D",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x3Cfe2381Eaf9f6513fF9c4bC18F078E1e78Bf815",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x80CBf5bEB0e05a3d396F86c45ff76b775346579D",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x14eD1b52c650eBF54592c3aB493e3D3b0A13Cd48",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0xa5E32a284d5028C20bBc36E6cFFed7994C74ccfA",
+    "error": "Already has sufficient token balance"
+  },
+  {
+    "address": "0x7e497d81E345DaCc1f88Df625b351cfb70BbDaC3",
+    "error": "Already has sufficient token balance"
   }
 ]

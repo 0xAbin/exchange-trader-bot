@@ -75,7 +75,7 @@ export async function sendGasToAddress(address: string, attempt: number, maxAtte
     const account = await FundingWallet;
     let gasPrice = await publicClient.getGasPrice(); // Get current gas price
 
-    const transactionValue = parseEther('0.05'); // This is the amount of Ether being sent
+    const transactionValue = parseEther('0.05'); // Amount of Ether being sent
 
     console.log(`\n⛽️ Sending gas to Wallet Address: ${address}`,`\n`);
 
@@ -90,7 +90,7 @@ export async function sendGasToAddress(address: string, attempt: number, maxAtte
         
         // Convert balance string to Wei
         const currentBalance = currentBalanceStr ? toWei(currentBalanceStr) : BigInt(0);
-        const threshold = parseEther('0.05'); // This is in Wei
+        const threshold = parseEther('0.05'); // Threshold in Wei
 
         // Skip if balance is more than the threshold
         if (currentBalance > threshold) {
@@ -187,6 +187,7 @@ export const sendGasToAccounts = async (accounts: { address: string, privateKey:
         let success = false;
         let attempt = 0;
         const maxAttempts = 5;
+        let retryDelay = 60000; // Initial delay for retries (1 minute)
 
         while (!success && attempt < maxAttempts) {
             attempt++;
@@ -197,23 +198,26 @@ export const sendGasToAccounts = async (accounts: { address: string, privateKey:
                 if (result === null) {
                     console.log(`\nSkipping address: ${account.address} as it already has sufficient gas.`);
                     success = true; // Skip to the next address immediately
+                    break; // Exit the retry loop to move to the next address
                 } else {
                     console.log(`\n✅ Gas sent successfully to ${account.address}`);
                     success = true; // Exit the loop if successful
                 }
             } catch (error) {
                 console.error(`❌ Failed to send gas to ${account.address}.`);
-                console.log('Retrying after 1 minute...');
-                await delay(60000); // Wait for 1 minute before retrying
+                console.log(`Retrying after ${retryDelay / 1000} seconds...`);
+                await delay(retryDelay); // Wait before retrying
+                retryDelay += 60000; // Increment delay by 1 minute
             }
         }
+
         if (!success) {
             console.log(`❌ Failed to send gas after ${maxAttempts} attempts.`);
         }
 
-        // Apply minimal delay (100 milliseconds) only if the address was processed and not skipped
+        // Apply minimal delay (1 second) before processing the next address
         if (success) {
-            await delay(1000); // 100 milliseconds before sending gas to the next address
+            await delay(1000); // 1 second delay before sending gas to the next address
         }
     }
 };
