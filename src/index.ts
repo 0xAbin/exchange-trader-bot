@@ -46,36 +46,36 @@ const BotStart = async (): Promise<void> => {
 
   try {
     // Fetch and log the balance of the Funding Wallet
-    // console.log("Processing Funding Wallet...\n");
-    // await logWalletDetails("Funding Wallet", FundingWallet.address);
+    console.log("Processing Funding Wallet...\n");
+    await logWalletDetails("Funding Wallet", FundingWallet.address);
 
-    // // Fetch and log the balance of the Mnemonic Wallet (uncomment if needed)
-    // // console.log("Processing Mnemonic Wallet...\n");
-    // // await logWalletDetails("Mnemonic Wallet", Mnemonicaccount.address);
+    // Fetch and log the balance of the Mnemonic Wallet (uncomment if needed)
+    // console.log("Processing Mnemonic Wallet...\n");
+    // await logWalletDetails("Mnemonic Wallet", Mnemonicaccount.address);
 
     console.log(`Sending gas to Mnemonic Wallet and associated accounts...`);
     await sendGasToAccounts(accountsPrivateKey);
     console.log("Gas sent successfully.\n");
 
-    // // Log elapsed time after sending gas
-    // console.log(`Elapsed time after sending gas: ${logElapsedTime()}`);
+    // Log elapsed time after sending gas
+    console.log(`Elapsed time after sending gas: ${logElapsedTime()}`);
 
-    // console.log("----- Starting Faucet Claim Process for All Wallets -----\n");
-    // await claimFaucet();
+    console.log("----- Starting Faucet Claim Process for All Wallets -----\n");
+    await claimFaucet();
 
-    // // Log elapsed time after claiming faucet
-    // console.log(`Elapsed time after faucet claim: ${logElapsedTime()}`);
+    // Log elapsed time after claiming faucet
+    console.log(`Elapsed time after faucet claim: ${logElapsedTime()}`);
 
-    // console.log("----- Starting Allowance Check Process for All Wallets -----\n");
-    // await getAllowance();
+    console.log("----- Starting Allowance Check Process for All Wallets -----\n");
+    await getAllowance();
 
-    // // Log elapsed time after allowance check
-    // console.log(`Elapsed time after allowance check: ${logElapsedTime()}`);
+    // Log elapsed time after allowance check
+    console.log(`Elapsed time after allowance check: ${logElapsedTime()}`);
 
-    // console.log("----- Starting Trade Open Process for All Wallets -----\n");
-    // await tradeOpen();
+    console.log("----- Starting Trade Open Process for All Wallets -----\n");
+    await tradeOpen();
 
-    multicallTrade()
+    // multicallTrade()
 
     // Log elapsed time after trading
     console.log(`Elapsed time after trade open: ${logElapsedTime()}`);

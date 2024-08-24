@@ -213,7 +213,7 @@ export const sendGasToAccounts = async (accounts: { address: string, privateKey:
 
         // Apply minimal delay (100 milliseconds) only if the address was processed and not skipped
         if (success) {
-            await delay(100); // 100 milliseconds before sending gas to the next address
+            await delay(1000); // 100 milliseconds before sending gas to the next address
         }
     }
 };
