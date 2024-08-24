@@ -5,8 +5,10 @@ import 'dotenv/config';
 import { ethers } from 'ethers';
 
 const generateAccounts = (mnemonic: string) => {
+    const totalwallets = parseInt(process.env.TOTALWALLETS  || "5") as number;
+    console.log("Total wallets to generate: ", totalwallets);
     const accounts = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < totalwallets; i++) {
         const account = mnemonicToAccount(mnemonic, {
             accountIndex: 0,
             addressIndex: i,
